@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Plus, Edit, Camera, Image as ImageIcon, Link, X } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { Plus, Edit, Camera, Image as ImageIcon, Link, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { ShoppingItemType, CreateShoppingItemDto, UpdateShoppingItemDto } from '../services/apiService';
 
 interface AddItemFormProps {
@@ -13,9 +13,10 @@ interface AddItemFormProps {
   onUpdateItem?: (item: UpdateShoppingItemDto) => void;
   editingItem?: ShoppingItemType | null;
   isEditing?: boolean;
+  isLoading?: boolean;
 }
 
-export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = false }: AddItemFormProps) {
+export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = false, isLoading = false }: AddItemFormProps) {
   const [itemName, setItemName] = useState('');
   const [image, setImage] = useState('');
   const [imageMethod, setImageMethod] = useState<'url' | 'gallery' | 'camera'>('url');
@@ -498,9 +499,19 @@ export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = 
             </div>
           </div>
           
-          <Button type="submit" className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg h-12">
-            {isEditing ? <Edit className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-            {isEditing ? 'Salvar Alterações' : 'Adicionar Item'}
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg h-12"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : isEditing ? (
+              <Edit className="w-4 h-4 mr-2" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            {isLoading ? (isEditing ? 'Salvando...' : 'Adicionando...') : (isEditing ? 'Salvar Alterações' : 'Adicionar Item')}
           </Button>
         </form>
       </CardContent>

@@ -7,6 +7,7 @@ import { FilterPanel } from './components/FilterPanel';
 import { Button } from './components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Toaster } from './components/ui/sonner';
+import { LoadingSpinner } from './components/ui/loading-spinner';
 import { Filter, Plus, ShoppingBag, CheckCircle, X } from 'lucide-react';
 import { apiService, ShoppingItemType, CreateShoppingItemDto, UpdateShoppingItemDto } from './services/apiService';
 import { toast } from 'sonner';
@@ -14,6 +15,10 @@ import { toast } from 'sonner';
 export default function App() {
   const [items, setItems] = useState<ShoppingItemType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingItem, setAddingItem] = useState(false);
+  const [updatingItem, setUpdatingItem] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+  const [togglingItemId, setTogglingItemId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItemType | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -44,6 +49,7 @@ export default function App() {
 
   const addItem = async (newItem: CreateShoppingItemDto) => {
     try {
+      setAddingItem(true);
       const createdItem = await apiService.createShoppingItem(newItem);
       setItems(prev => [createdItem, ...prev]);
       setShowForm(false);
@@ -51,6 +57,8 @@ export default function App() {
     } catch (error) {
       toast.error('Erro ao adicionar item');
       console.error('Error adding item:', error);
+    } finally {
+      setAddingItem(false);
     }
   };
 
@@ -58,6 +66,7 @@ export default function App() {
     if (!editingItem) return;
     
     try {
+      setUpdatingItem(true);
       await apiService.updateShoppingItem(editingItem.id, updatedItem);
       setItems(prev => prev.map(item => 
         item.id === editingItem.id 
@@ -69,11 +78,14 @@ export default function App() {
     } catch (error) {
       toast.error('Erro ao atualizar item');
       console.error('Error updating item:', error);
+    } finally {
+      setUpdatingItem(false);
     }
   };
 
   const togglePurchased = async (id: number) => {
     try {
+      setTogglingItemId(id);
       await apiService.togglePurchased(id);
       setItems(prev => prev.map(item => 
         item.id === id ? { ...item, purchased: !item.purchased, updatedAt: new Date().toISOString() } : item
@@ -82,17 +94,22 @@ export default function App() {
     } catch (error) {
       toast.error('Erro ao atualizar status');
       console.error('Error toggling purchased:', error);
+    } finally {
+      setTogglingItemId(null);
     }
   };
 
   const deleteItem = async (id: number) => {
     try {
+      setDeletingItemId(id);
       await apiService.deleteShoppingItem(id);
       setItems(prev => prev.filter(item => item.id !== id));
       toast.success('Item removido com sucesso!');
     } catch (error) {
       toast.error('Erro ao remover item');
       console.error('Error deleting item:', error);
+    } finally {
+      setDeletingItemId(null);
     }
   };
 
@@ -136,6 +153,27 @@ export default function App() {
 
         <ShoppingStats items={items} />
 
+        {loading && (
+          <div className="mb-3">
+            <LoadingSpinner
+              size="sm"
+              text="Carregando itens..."
+              className="py-2"
+            />
+          </div>
+        )}
+
+        {/* Loading animations positioned below headers */}
+        {(addingItem || updatingItem) && (
+          <div className="mb-4">
+            <LoadingSpinner 
+              size="sm" 
+              text={addingItem ? "Adicionando item..." : "Atualizando item..."} 
+              className="py-2"
+            />
+          </div>
+        )}
+
         <div className="mb-4">
           {!showForm && !editingItem ? (
             <div className="space-y-3">
@@ -178,6 +216,7 @@ export default function App() {
                 onUpdateItem={updateItem}
                 editingItem={editingItem}
                 isEditing={!!editingItem}
+                isLoading={addingItem || updatingItem}
               />
               <Button 
                 variant="outline" 
@@ -217,33 +256,7 @@ export default function App() {
             <TabsContent value="all" className="mt-4">
               <div className="grid grid-cols-2 gap-3">
                 {allItems.map(item => (
-                  <ShoppingItem
-                    id={item.id}
-                    itemName={item.itemName}
-                    image={item.image}
-                    storeName={item.storeName}
-                    category={item.category}
-                    city={item.city}
-                    region={item.region}
-                    forWhom={item.forWhom}
-                    priceReal={item.priceReal}
-                    priceYen={item.priceYen}
-                    priceDollar={item.priceDollar}
-                    purchased={item.purchased}
-                    createdAt={item.createdAt}
-                    updatedAt={item.updatedAt}
-                    onTogglePurchased={togglePurchased}
-                    onDelete={deleteItem}
-                    onEdit={startEditing}
-                  />
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="pending" className="mt-4">
-              {pendingItems.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
-                                                    {pendingItems.map(item => (
+                  <div key={item.id}>
                     <ShoppingItem
                       id={item.id}
                       itemName={item.itemName}
@@ -262,7 +275,41 @@ export default function App() {
                       onTogglePurchased={togglePurchased}
                       onDelete={deleteItem}
                       onEdit={startEditing}
+                      isToggling={togglingItemId === item.id}
+                      isDeleting={deletingItemId === item.id}
                     />
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="pending" className="mt-4">
+              {pendingItems.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {pendingItems.map(item => (
+                    <div key={item.id}>
+                      <ShoppingItem
+                        id={item.id}
+                        itemName={item.itemName}
+                        image={item.image}
+                        storeName={item.storeName}
+                        category={item.category}
+                        city={item.city}
+                        region={item.region}
+                        forWhom={item.forWhom}
+                        priceReal={item.priceReal}
+                        priceYen={item.priceYen}
+                        priceDollar={item.priceDollar}
+                        purchased={item.purchased}
+                        createdAt={item.createdAt}
+                        updatedAt={item.updatedAt}
+                        onTogglePurchased={togglePurchased}
+                        onDelete={deleteItem}
+                        onEdit={startEditing}
+                        isToggling={togglingItemId === item.id}
+                        isDeleting={deletingItemId === item.id}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -276,26 +323,30 @@ export default function App() {
             <TabsContent value="purchased" className="mt-4">
               {purchasedItems.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                                                    {purchasedItems.map(item => (
-                    <ShoppingItem
-                      id={item.id}
-                      itemName={item.itemName}
-                      image={item.image}
-                      storeName={item.storeName}
-                      category={item.category}
-                      city={item.city}
-                      region={item.region}
-                      forWhom={item.forWhom}
-                      priceReal={item.priceReal}
-                      priceYen={item.priceYen}
-                      priceDollar={item.priceDollar}
-                      purchased={item.purchased}
-                      createdAt={item.createdAt}
-                      updatedAt={item.updatedAt}
-                      onTogglePurchased={togglePurchased}
-                      onDelete={deleteItem}
-                      onEdit={startEditing}
-                    />
+                  {purchasedItems.map(item => (
+                    <div key={item.id}>
+                      <ShoppingItem
+                        id={item.id}
+                        itemName={item.itemName}
+                        image={item.image}
+                        storeName={item.storeName}
+                        category={item.category}
+                        city={item.city}
+                        region={item.region}
+                        forWhom={item.forWhom}
+                        priceReal={item.priceReal}
+                        priceYen={item.priceYen}
+                        priceDollar={item.priceDollar}
+                        purchased={item.purchased}
+                        createdAt={item.createdAt}
+                        updatedAt={item.updatedAt}
+                        onTogglePurchased={togglePurchased}
+                        onDelete={deleteItem}
+                        onEdit={startEditing}
+                        isToggling={togglingItemId === item.id}
+                        isDeleting={deletingItemId === item.id}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -307,19 +358,21 @@ export default function App() {
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
-              <ShoppingBag className="w-6 h-6 text-muted-foreground" />
+          !loading && (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                <ShoppingBag className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold mb-2">Sua lista está vazia</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Adicione seu primeiro item de compra
+              </p>
+              <Button onClick={() => setShowForm(true)} className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Primeiro Item
+              </Button>
             </div>
-            <h3 className="font-semibold mb-2">Sua lista está vazia</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Adicione seu primeiro item de compra
-            </p>
-            <Button onClick={() => setShowForm(true)} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Primeiro Item
-            </Button>
-          </div>
+          )
         )}
       </div>
       <Toaster />

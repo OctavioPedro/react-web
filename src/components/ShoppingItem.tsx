@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from './ui/dialog';
-import { Check, Trash2, MapPin, Store, Edit, Building, Expand } from 'lucide-react';
+import { Check, Trash2, MapPin, Store, Edit, Building, Expand, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ShoppingItemType } from '../services/apiService';
 
@@ -26,6 +26,8 @@ interface ShoppingItemProps {
   onTogglePurchased: (id: number) => void;
   onDelete: (id: number) => void;
   onEdit: (item: ShoppingItemType) => void;
+  isToggling?: boolean;
+  isDeleting?: boolean;
 }
 
 export function ShoppingItem({
@@ -45,7 +47,9 @@ export function ShoppingItem({
   updatedAt,
   onTogglePurchased,
   onDelete,
-  onEdit
+  onEdit,
+  isToggling = false,
+  isDeleting = false
 }: ShoppingItemProps) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
@@ -203,6 +207,7 @@ export function ShoppingItem({
               variant={purchased ? "default" : "outline"}
               size="sm"
               onClick={() => onTogglePurchased(id)}
+              disabled={isToggling || isDeleting}
               className="w-full flex items-center justify-center gap-2 text-sm py-2"
               style={{ 
                 backgroundColor: purchased ? '#10b981' : 'transparent', 
@@ -210,8 +215,12 @@ export function ShoppingItem({
                 color: purchased ? 'white' : '#10b981' 
               }}
             >
-              <Check className="w-4 h-4" />
-              Comprei
+              {isToggling ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              {isToggling ? 'Atualizando...' : 'Comprei'}
             </Button>
             
             {/* Botões de Edição e Exclusão - lado a lado */}
@@ -220,6 +229,7 @@ export function ShoppingItem({
                 variant="outline"
                 size="sm"
                 onClick={handleEdit}
+                disabled={isToggling || isDeleting}
                 className="flex items-center justify-center gap-1 text-xs py-2 border-slate-300 hover:border-slate-400"
               >
                 <Edit className="w-3 h-3" />
@@ -229,9 +239,14 @@ export function ShoppingItem({
                 variant="destructive"
                 size="sm"
                 onClick={() => onDelete(id)}
+                disabled={isToggling || isDeleting}
                 className="flex items-center justify-center gap-1 text-xs py-2"
               >
-                <Trash2 className="w-3 h-3" />
+                {isDeleting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3 h-3" />
+                )}
               </Button>
             </div>
           </div>
