@@ -4981,3 +4981,15 @@ html {
     opacity: 0;
   }
 }
+
+/* Custom addition: provide spin keyframes and animate-spin utility
+   Tailwind v4 build here lacks the default spin animation. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
