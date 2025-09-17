@@ -96,8 +96,8 @@ export function ShoppingItem({
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md border ${purchased ? 'opacity-60 bg-muted/50' : 'bg-gradient-to-br from-white to-slate-50 border-slate-200'}`}>
-      <CardContent className="p-0">
+    <Card className={`h-full flex flex-col transition-all duration-200 hover:shadow-md border ${purchased ? 'opacity-60 bg-muted/50' : 'bg-gradient-to-br from-white to-slate-50 border-slate-200'}`}>
+      <CardContent className="p-0 flex-1 flex flex-col">
         {/* Imagem no topo */}
         <div className="relative">
           {image ? (
@@ -145,7 +145,7 @@ export function ShoppingItem({
         </div>
 
         {/* Conteúdo do card */}
-        <div className="p-3 space-y-3">
+        <div className="p-3 space-y-3 flex-1 flex flex-col">
           {/* Nome do item */}
           <div className="text-center">
             <h3 className={`font-semibold text-sm leading-tight ${purchased ? 'line-through' : ''}`}>
@@ -201,7 +201,7 @@ export function ShoppingItem({
           )}
 
           {/* Botões */}
-          <div className="space-y-2">
+          <div className="space-y-2 mt-auto">
             {/* Botão Comprei - largura total */}
             <Button
               variant={purchased ? "default" : "outline"}

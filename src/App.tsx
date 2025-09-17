@@ -8,13 +8,14 @@ import { Button } from './components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Toaster } from './components/ui/sonner';
 import { LoadingSpinner } from './components/ui/loading-spinner';
-import { Filter, Plus, ShoppingBag, CheckCircle, X } from 'lucide-react';
+import { Filter, Plus, ShoppingBag, CheckCircle, X, AlertCircle, RotateCcw } from 'lucide-react';
 import { apiService, ShoppingItemType, CreateShoppingItemDto, UpdateShoppingItemDto } from './services/apiService';
 import { toast } from 'sonner';
 
 export default function App() {
   const [items, setItems] = useState<ShoppingItemType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [addingItem, setAddingItem] = useState(false);
   const [updatingItem, setUpdatingItem] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
@@ -36,12 +37,14 @@ export default function App() {
 
   const loadItems = async () => {
     try {
+      setLoadError(false);
       setLoading(true);
       const data = await apiService.getShoppingItems();
       setItems(data);
     } catch (error) {
       toast.error('Erro ao carregar itens');
       console.error('Error loading items:', error);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -174,60 +177,62 @@ export default function App() {
           </div>
         )}
 
-        <div className="mb-4">
-          {!showForm && !editingItem ? (
-            <div className="space-y-3">
-              <Button 
-                onClick={() => setShowForm(true)}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
-                size="lg"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Novo Item
-              </Button>
-              
-              {items.length > 0 && (
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex-1"
-                  >
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filtros {hasActiveFilters && '(ativo)'}
-                  </Button>
-                  {hasActiveFilters && (
+        {!loading && !loadError && (
+          <div className="mb-4">
+            {!showForm && !editingItem ? (
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => setShowForm(true)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+                  size="lg"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Novo Item
+                </Button>
+                
+                {items.length > 0 && (
+                  <div className="flex gap-2">
                     <Button 
                       variant="outline" 
-                      onClick={() => setFilters({ category: '', city: '', region: '', forWhom: '' })}
-                      size="sm"
-                      className="px-3"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="flex-1"
                     >
-                      <X className="w-4 h-4" />
+                      <Filter className="w-4 h-4 mr-2" />
+                      Filtros {hasActiveFilters && '(ativo)'}
                     </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <AddItemForm 
-                onAddItem={addItem}
-                onUpdateItem={updateItem}
-                editingItem={editingItem}
-                isEditing={!!editingItem}
-                isLoading={addingItem || updatingItem}
-              />
-              <Button 
-                variant="outline" 
-                onClick={editingItem ? cancelEditing : () => setShowForm(false)}
-                className="w-full"
-              >
-                Cancelar
-              </Button>
-            </div>
-          )}
-        </div>
+                    {hasActiveFilters && (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setFilters({ category: '', city: '', region: '', forWhom: '' })}
+                        size="sm"
+                        className="px-3"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <AddItemForm 
+                  onAddItem={addItem}
+                  onUpdateItem={updateItem}
+                  editingItem={editingItem}
+                  isEditing={!!editingItem}
+                  isLoading={addingItem || updatingItem}
+                />
+                <Button 
+                  variant="outline" 
+                  onClick={editingItem ? cancelEditing : () => setShowForm(false)}
+                  className="w-full"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {showFilters && items.length > 0 && (
           <div className="mb-4">
@@ -239,7 +244,19 @@ export default function App() {
           </div>
         )}
 
-        {items.length > 0 ? (
+        {loadError ? (
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="font-semibold mb-2">Não foi possível carregar os itens</h3>
+            <p className="text-sm text-muted-foreground mb-4">Verifique sua conexão e tente novamente.</p>
+            <Button onClick={loadItems} className="w-full">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Tentar novamente
+            </Button>
+          </div>
+        ) : items.length > 0 ? (
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
               <TabsTrigger value="all" className="text-xs">
