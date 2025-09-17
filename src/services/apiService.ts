@@ -21,19 +21,29 @@ export interface ShoppingItemType {
 
 export interface CreateShoppingItemDto {
   itemName: string;
-  image: string;
-  storeName: string;
   category: string;
-  city: string;
-  region: string;
-  forWhom: string;
-  priceReal: number;
-  priceYen: number;
-  priceDollar: number;
+  image?: string;
+  storeName?: string;
+  city?: string;
+  region?: string;
+  forWhom?: string;
+  priceReal?: number;
+  priceYen?: number;
+  priceDollar?: number;
 }
 
-export interface UpdateShoppingItemDto extends CreateShoppingItemDto {
-  purchased: boolean;
+export interface UpdateShoppingItemDto {
+  itemName: string;
+  category: string;
+  image?: string;
+  storeName?: string;
+  city?: string;
+  region?: string;
+  forWhom?: string;
+  priceReal?: number;
+  priceYen?: number;
+  priceDollar?: number;
+  purchased?: boolean;
 }
 
 export interface ShoppingStats {

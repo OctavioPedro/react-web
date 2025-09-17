@@ -200,27 +200,29 @@ export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!itemName || !storeName || !category || !city || !region || !forWhom) {
+    // Validate only mandatory fields: itemName and category
+    if (!itemName || !category) {
       return;
     }
 
-    const itemData = {
+    // Build payload including only provided optional fields
+    const itemData: CreateShoppingItemDto = {
       itemName,
-      image: image || '',
-      storeName,
       category,
-      city,
-      region,
-      forWhom,
-      priceReal: priceReal ? Number(priceReal) : 0,
-      priceYen: priceYen ? Number(priceYen) : 0,
-      priceDollar: priceDollar ? Number(priceDollar) : 0
     };
+
+    if (image) itemData.image = image;
+    if (storeName) itemData.storeName = storeName;
+    if (city) itemData.city = city;
+    if (region) itemData.region = region;
+    if (forWhom) itemData.forWhom = forWhom;
+    if (priceReal) itemData.priceReal = Number(priceReal);
+    if (priceYen) itemData.priceYen = Number(priceYen);
+    if (priceDollar) itemData.priceDollar = Number(priceDollar);
 
     if (isEditing && onUpdateItem) {
       onUpdateItem({
         ...itemData,
-        purchased: editingItem?.purchased || false
       });
     } else {
       onAddItem(itemData);
@@ -378,13 +380,12 @@ export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = 
             
             {/* Loja */}
             <div className="space-y-2">
-              <Label htmlFor="storeName" className="text-slate-700 font-medium">Loja *</Label>
+              <Label htmlFor="storeName" className="text-slate-700 font-medium">Loja</Label>
               <Input
                 id="storeName"
                 placeholder="Ex: Don Quijote, Bic Camera..."
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
-                required
                 className="bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-200"
               />
             </div>
@@ -409,8 +410,8 @@ export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = 
             {/* Cidade e Região */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="city" className="text-slate-700 font-medium">Cidade *</Label>
-                <Select value={city} onValueChange={setCity} required>
+                <Label htmlFor="city" className="text-slate-700 font-medium">Cidade</Label>
+                <Select value={city} onValueChange={setCity}>
                   <SelectTrigger className="bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-200">
                     <SelectValue placeholder="Cidade" />
                   </SelectTrigger>
@@ -422,13 +423,12 @@ export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="region" className="text-slate-700 font-medium">Região *</Label>
+                <Label htmlFor="region" className="text-slate-700 font-medium">Região</Label>
                 <Input
                   id="region"
                   placeholder="Ex: Shibuya, Namba..."
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
-                  required
                   className="bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-200"
                 />
               </div>
@@ -436,13 +436,12 @@ export function AddItemForm({ onAddItem, onUpdateItem, editingItem, isEditing = 
 
             {/* Para quem */}
             <div className="space-y-2">
-              <Label htmlFor="forWhom" className="text-slate-700 font-medium">Para quem *</Label>
+              <Label htmlFor="forWhom" className="text-slate-700 font-medium">Para quem</Label>
               <Input
                 id="forWhom"
                 placeholder="Ex: Minha esposa, João, Para mim..."
                 value={forWhom}
                 onChange={(e) => setForWhom(e.target.value)}
-                required
                 className="bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-200"
               />
             </div>
